@@ -1,0 +1,18 @@
+{
+    "extends": "airbnb-base",
+    "plugins": [
+        "import"
+    ],
+    "rules": {
+        "arrow-body-style": "off",
+        "no-console": "off",
+        "no-restricted-globals": "off",
+        "func-names": "off"
+    },
+    "globals": {
+        "it": false,
+        "describe": false,
+        "beforeEach": false,
+        "afterEach": false
+    }
+}
