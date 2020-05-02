@@ -5,72 +5,63 @@ const authHelpers = require('../auth/helpers');
 
 const router = express.Router();
 
-router.get('/get/managers', authHelpers.ensureAdmin, async (req, res) => {
-  const query = `SELECT users.id, name from users
-    inner join employee on users.id=employee.user_id
-    where reporting_manager is null
-  `;
+// Route to store general information of the user.
+// This is the one time information.
+router.get('/', authHelpers.ensureAuthenticated, async (req, res) => {
+  // Obtain user and data from requestt.
+  const { user } = req;
+
+  if (!user.admin) return res.status(401).json({ message: 'Not authorized' });
 
   try {
+    // Check if user has already stored the information
+    const query = `
+      select id, description, calories, created_at, username from calorie_count
+      inner join users on users.id=calorie_count.created_by
+      where order by created_at
+    `;
     const { rows } = await knex.raw(query);
+
     return res.status(200).json({ message: rows });
   } catch (e) {
     console.log(e);
-    return res.status(500).json({ status: 'error' });
+    return res.status(500).json({ message: 'error' });
   }
 });
 
-router.post('/adduser', authHelpers.ensureAdmin, async (req, res) => {
-  try {
-    await authHelpers.createUserAdmin(req);
-    return res.status(200).json({ message: 'user created' });
-  } catch (e) {
-    console.log(e);
-    return res.status(500).json({ status: 'error' });
-  }
-});
+router.get('/edit/:id', authHelpers.ensureAuthenticated, async (req, res) => {
+  const { user } = req;
 
-router.get('/user/:id', authHelpers.ensureAdmin, async (req, res) => {
+  if (!user.admin) return res.status(401).json({ message: 'Not authorized' });
+
   const { id } = req.params;
-
-  const query = `SELECT users.id, name, username, reporting_manager, is_activated, email
-    from users
-    left outer join employee on users.id=employee.user_id
-    where users.id=?
-  `;
-
-  try {
-    const { rows: [user] } = await knex.raw(query, [id]);
-    return res.status(200).json({ message: user });
-  } catch (e) {
-    console.log(e);
-    return res.status(500).json({ status: 'error' });
-  }
-});
-
-router.post('/edituser/:id', authHelpers.ensureAdmin, async (req, res) => {
-  try {
-    await authHelpers.editUser(req);
-    return res.status(200).json({ message: 'user edited' });
-  } catch (e) {
-    console.log(e);
-    return res.status(500).json({ status: 'error' });
-  }
-});
-
-router.get('/', authHelpers.ensureAdmin, async (req, res) => {
-  const query = `SELECT users.id, name, username, reporting_manager, is_activated
-    from users
-    left outer join employee on users.id=employee.user_id
-    order by id
-  `;
+  const query = `select description, calories from calorie_count where id=${id}`
 
   try {
     const { rows } = await knex.raw(query);
-    return res.status(200).json({ message: rows });
+    return res.status(200).json({ status: 'success', message: rows });
   } catch (e) {
     console.log(e);
-    return res.status(500).json({ status: 'error' });
+    return res.status(500).json({ message: 'unable to insert data' });
+  }
+});
+
+router.post('/edit/:id', authHelpers.ensureAuthenticated, async (req, res) => {
+  const { user } = req;
+
+  if (!user.admin) return res.status(401).json({ message: 'Not authorized' });
+
+  const { id } = req.params;
+  const { description, calorieCount } = req.body;
+
+  try {
+    await knex('calorie_count')
+      .update({ description, calories: calorieCount })
+      .where({ created_by: id });
+    return res.status(200).json({ status: 'success' });
+  } catch (e) {
+    console.log(e);
+    return res.status(500).json({ message: 'unable to insert data' });
   }
 });
 
