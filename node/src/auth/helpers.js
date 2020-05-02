@@ -54,6 +54,7 @@ const ensureAuthenticated = (req, res, next) => {
   // decode the token
   const [, token] = req.headers.authorization.split(' ');
 
+
   localAuth.decodeToken(token, async (err, payload) => {
     if (err) {
       console.log(err);

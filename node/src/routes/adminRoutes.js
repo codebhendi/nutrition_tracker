@@ -5,63 +5,119 @@ const authHelpers = require('../auth/helpers');
 
 const router = express.Router();
 
-// Route to store general information of the user.
-// This is the one time information.
-router.get('/', authHelpers.ensureAuthenticated, async (req, res) => {
-  // Obtain user and data from requestt.
-  const { user } = req;
 
-  if (!user.admin) return res.status(401).json({ message: 'Not authorized' });
+// Route to obtain a meal for any user to be edited
+router.get('/meals/:id', authHelpers.ensureAuthenticated, async (req, res) => {
+  const { user } = req;
+  const { id } = req.params;
+  if (!user.admin) return res.status(401).json({ message: 'Unauthorized' });
 
   try {
-    // Check if user has already stored the information
     const query = `
-      select id, description, calories, created_at, username from calorie_count
-      inner join users on users.id=calorie_count.created_by
-      where order by created_at
+      select description, calories, date from calorie_count
+      where id=?
     `;
-    const { rows } = await knex.raw(query);
+    const { rows: meals } = await knex.raw(query, [id]);
 
-    return res.status(200).json({ message: rows });
+    return res.status(200).json({ message: meals[0] });
   } catch (e) {
     console.log(e);
-    return res.status(500).json({ message: 'error' });
+    return res.status(500).json({ message: 'Unable to obtain meal', error: e });
   }
 });
 
-router.get('/edit/:id', authHelpers.ensureAuthenticated, async (req, res) => {
+// Route to update a meal for any user to be edited
+router.post('/meals/:id', authHelpers.ensureAuthenticated, async (req, res) => {
   const { user } = req;
 
-  if (!user.admin) return res.status(401).json({ message: 'Not authorized' });
+  if (!user.admin) return res.status(401).json({ message: 'Unauthorized' });
 
   const { id } = req.params;
-  const query = `select description, calories from calorie_count where id=${id}`
-
-  try {
-    const { rows } = await knex.raw(query);
-    return res.status(200).json({ status: 'success', message: rows });
-  } catch (e) {
-    console.log(e);
-    return res.status(500).json({ message: 'unable to insert data' });
-  }
-});
-
-router.post('/edit/:id', authHelpers.ensureAuthenticated, async (req, res) => {
-  const { user } = req;
-
-  if (!user.admin) return res.status(401).json({ message: 'Not authorized' });
-
-  const { id } = req.params;
-  const { description, calorieCount } = req.body;
+  const { description, calorieCount, date } = req.body;
 
   try {
     await knex('calorie_count')
-      .update({ description, calories: calorieCount })
-      .where({ created_by: id });
-    return res.status(200).json({ status: 'success' });
+      .update({ description, calorie_count: calorieCount, date })
+      .where({ id });
+    return res.status(200).json({ message: 'updated meal' });
   } catch (e) {
     console.log(e);
-    return res.status(500).json({ message: 'unable to insert data' });
+    return res.status(500).json({ message: 'Unable to update meal', error: e });
+  }
+});
+
+// Route to obtain all meals
+router.get('/meals', authHelpers.ensureAuthenticated, async (req, res) => {
+  const { user } = req;
+
+  if (!user.admin) return res.status(401).json({ message: 'Unauthorized' });
+
+  try {
+    const query = `
+      select calorie_count.id, description, username, calories, date from calorie_count
+      inner join users on users.id = calorie_count.created_by
+      order by calorie_count.created_at
+    `;
+    const { rows: meals } = await knex.raw(query);
+
+    return res.status(200).json({ message: meals });
+  } catch (e) {
+    console.log(e);
+    return res.status(500).json({ message: 'Unable to obtain meals', error: e });
+  }
+});
+
+// Route to obtain an user to be edited from the id in url params
+router.get('/users/:id', authHelpers.ensureAuthenticated, async (req, res) => {
+  const { user } = req;
+  const { id } = req.params;
+  if (!user.admin) return res.status(401).json({ message: 'Unauthorized' });
+
+  try {
+    const query = 'select username, calorie_per_day from users where id=?';
+    const { rows: users } = await knex.raw(query, [id]);
+
+    return res.status(200).json({ message: users[0] });
+  } catch (e) {
+    console.log(e);
+    return res.status(500).json({ message: 'Unable to obtain user', error: e });
+  }
+});
+
+// Route to update an user to be edited from the id in url params
+router.post('/users/:id', authHelpers.ensureAuthenticated, async (req, res) => {
+  const { user } = req;
+
+  if (!user.admin) return res.status(401).json({ message: 'Unauthorized' });
+
+  const { id } = req.params;
+  const { username, caloriePerDay } = req.body;
+
+  try {
+    await knex('users')
+      .update({ username, calorie_per_day: caloriePerDay })
+      .where({ id });
+    return res.status(200).json({ message: 'updated user' });
+  } catch (e) {
+    console.log(e);
+    return res.status(500).json({ message: 'Unable to update user', error: e });
+  }
+});
+
+// Route to obtain all users.
+router.get('/users', authHelpers.ensureAuthenticated, async (req, res) => {
+  const { user } = req;
+
+  if (!user.admin) return res.status(401).json({ message: 'Unauthorized' });
+
+  try {
+    const query = 'select id, username, calorie_per_day from users order by created_at';
+    const { rows: users } = await knex.raw(query);
+
+    return res.status(200).json({ message: users });
+  } catch (e) {
+    console.log(e);
+    return res.status(500).json({ message: 'Unable to obtain users', error: e });
   }
 });
 

@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
+import PropTypes from 'prop-types';
 import Axios from 'axios';
+import { Redirect, Link } from 'react-router-dom';
 import Typography from '@material-ui/core/Typography';
 import CardContent from '@material-ui/core/CardContent';
 import Container from '@material-ui/core/Container';
@@ -9,8 +11,6 @@ import CircularProgress from '@material-ui/core/CircularProgress';
 import Button from '@material-ui/core/Button';
 import green from '@material-ui/core/colors/green';
 import makeStyles from '@material-ui/styles/makeStyles';
-import { Link, Redirect } from 'react-router-dom';
-import PropTypes from 'prop-types';
 import { ToastContainer, toast } from 'react-toastify';
 
 import { node } from '../../urls';
@@ -40,74 +40,81 @@ const useStyles = makeStyles(() => ({
   },
 }));
 
-const Login = ({ user, updateUser }) => {
+const Profile = ({ user }) => {
   const classes = useStyles();
   const [loading, setLoading] = useState(false);
-  const [credentials, setCredentials] = useState({ username: '', password: '' });
+  const [formObject, setFormObject] = useState({
+    username: user.username, caloriePerDay: user.calorie_per_day,
+  });
 
-  // handle login form input changes to store them in state
   const handleChange = (event) => {
-    const { target: { name, value } } = event;
+    event.preventDefault();
+    const { name, value } = event.target;
 
-    setCredentials({ ...credentials, [name]: value });
+    setFormObject({ ...formObject, [name]: value });
   };
 
-  const login = async () => {
-    const { username, password } = credentials;
+  const validate = () => {
+    try {
+      if (!formObject.username) {
+        toast.error('No username specified');
+        return true;
+      }
 
-    if (!username || !password) {
-      toast.error('Invalid email or password.');
+      const value = parseFloat(formObject.caloriePerDay);
+
+      if (value < 100 || Number.isNaN(value)) {
+        toast.error('Calories Per Day must be greater than 100');
+        return true;
+      }
+    } catch (e) {
+      console.log(e);
+      return true;
     }
+
+    return false;
+  };
+
+  const handleSubmit = async () => {
+    if (validate()) return;
 
     const options = {
       method: 'post',
-      url: `${node}/auth/login`,
-      data: { username: username.trim(), password },
+      url: `${node}/profile`,
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${window.localStorage.authToken}`,
+      },
+      data: formObject,
     };
 
     setLoading(true);
 
     try {
-      const { data: { token, user: newUser } } = await Axios(options);
-      window.localStorage.setItem('authToken', token);
-
-      toast.success('User logged in. Please wait redirecting');
-      updateUser(newUser);
+      await Axios(options);
+      toast.success('Updated profile');
     } catch (e) {
-      console.log('login error', e);
-      toast.error('Wrong email or password. Please check and retry');
+      console.log(e);
+      toast.error('Unable to update profile');
     } finally { setLoading(false); }
   };
 
-  // method to submit login form so that the user can be authenticated
-  const handleSubmit = () => {
-    if (loading) return;
+  if (!user) return <Redirect to="/login" />;
 
-    login(credentials);
-  };
+  const { username, caloriePerDay } = formObject;
 
   const handleKeyPress = (event) => { if (event.key === 'Enter') handleSubmit(); };
 
-  if (user) return <Redirect to="/" />;
-
-  const { username, password } = credentials;
-
   return (
-    <Container maxWidth="sm">
-      <div className="login-container">
-        <Card className="form-card">
-          <div className="photo-cover">
-            <CardContent
-              title="Login"
-              className="form-heading"
-            >
-              <Typography variant="h4" component="h2" className="white-bold">
-                Login
-              </Typography>
-            </CardContent>
-          </div>
+    <Container maxWidth="md">
+      <div>
+        <Card>
+          <CardContent title="Add Meals">
+            <Typography variant="h4" component="h4">
+              Profile
+            </Typography>
+          </CardContent>
           <CardContent onKeyPress={handleKeyPress}>
-            <br />
             <TextField
               label="Username"
               margin="normal"
@@ -117,20 +124,19 @@ const Login = ({ user, updateUser }) => {
               InputLabelProps={{ shrink: true }}
               name="username"
               onChange={handleChange}
-              value={username}
+              value={username || user.username}
             />
             <TextField
-              label="Password"
-              type="password"
-              placeholder="Password"
-              autoComplete="current-password"
+              label="Calories Per Day"
+              type="number"
+              placeholder="Calories Per Day"
               margin="normal"
               variant="outlined"
               fullWidth
               InputLabelProps={{ shrink: true }}
-              name="password"
+              name="caloriePerDay"
               onChange={handleChange}
-              value={password}
+              value={caloriePerDay || user.calorie_per_day}
             />
             <div style={{ display: 'flex' }}>
               <div className={classes.wrapper}>
@@ -151,7 +157,7 @@ const Login = ({ user, updateUser }) => {
             </div>
           </CardContent>
           <CardContent>
-            <Link to="/signup">Create Account</Link>
+            <Link to="/profile/resetpassword">Reset Password</Link>
           </CardContent>
         </Card>
       </div>
@@ -160,11 +166,13 @@ const Login = ({ user, updateUser }) => {
   );
 };
 
-Login.propTypes = {
-  user: PropTypes.shape({}),
-  updateUser: PropTypes.func.isRequired,
+Profile.propTypes = {
+  user: PropTypes.shape({
+    calorie_per_day: PropTypes.number,
+    username: PropTypes.string,
+  }),
 };
 
-Login.defaultProps = { user: null };
+Profile.defaultProps = { user: null };
 
-export default Login;
+export default Profile;

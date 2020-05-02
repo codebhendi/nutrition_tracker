@@ -13,8 +13,15 @@ import withStyles from '@material-ui/styles/withStyles';
 
 import Signup from './pages/signup/Signup';
 import Login from './pages/login/Login';
+import EditMeals from './pages/meals/edit/Edit';
+import AddMeal from './pages/meals/add/Add';
 import Meals from './pages/meals/Meals';
-import AddMeal from './pages/add/Add';
+import ResetPassword from './pages/profile/resetpassword/ResetPassword';
+import Profile from './pages/profile/Profile';
+import AdminMeals from './pages/admin/allmeals/AllMeals';
+import AdminUsers from './pages/admin/allusers/AllUsers';
+import AdminMealsEdit from './pages/admin/edit/meals/AdminMealsEdit';
+import AdminUsersEdit from './pages/admin/edit/users/AdminUsersEdit';
 import Home from './pages/home/Home';
 import { node } from './urls';
 
@@ -43,6 +50,11 @@ class App extends Component {
     super(props);
 
     this.state = { loading: true, user: null };
+  }
+
+  logout = () => {
+    window.localStorage.clear();
+    this.setState({ user: null });
   }
 
   getUserData = async () => {
@@ -100,21 +112,41 @@ class App extends Component {
                 <Typography variant="h6" className={classes.title} component={Link} to="/meals">
                   Meals
                 </Typography>
-                <Typography variant="h6" className={classes.title} component={Link} to="/add">
+                <Typography variant="h6" className={classes.title} component={Link} to="/meals/add">
                   Add Meal
                 </Typography>
+                <Typography variant="h6" className={classes.title} component={Link} to="/profile">
+                  Profile
+                </Typography>
+                {user.admin && (
+                  <>
+                    <Typography variant="h6" className={classes.title} component={Link} to="/admin/meals">
+                      All meals
+                    </Typography>
+                    <Typography variant="h6" className={classes.title} component={Link} to="/admin/users">
+                      All users
+                    </Typography>
+                  </>
+                )}
               </>
             )}
-            {user && <Button color="inherit">Logout</Button>}
+            {user && <Button color="inherit" onClick={this.logout}>Logout</Button>}
             {!user && <Button color="inherit">Login</Button>}
           </Toolbar>
         </AppBar>
         <Switch>
           <Route render={(pr) => <Signup {...pr} {...props} />} path="/signup" />
           <Route render={(pr) => <Login {...pr} {...props} />} path="/login" />
+          <Route render={(pr) => <AddMeal {...pr} {...props} />} path="/meals/add" />
+          <Route render={(pr) => <EditMeals {...pr} {...props} />} path="/meals/edit/:id" />
           <Route render={(pr) => <Meals {...pr} {...props} />} path="/meals" />
-          <Route render={(pr) => <AddMeal {...pr} {...props} />} path="/add" />
-          <Route render={(pr) => <Home {...pr} {...props} />} exact path="/" />
+          <Route render={(pr) => <AdminMealsEdit {...pr} {...props} />} path="/admin/meals/edit/:id" />
+          <Route render={(pr) => <AdminUsersEdit {...pr} {...props} />} path="/admin/users/edit/:id" />
+          <Route render={(pr) => <AdminMeals {...pr} {...props} />} path="/admin/meals" />
+          <Route render={(pr) => <AdminUsers {...pr} {...props} />} path="/admin/users" />
+          <Route render={(pr) => <ResetPassword {...pr} {...props} />} path="/profile/resetpassword" />
+          {user && <Route render={(pr) => <Profile {...pr} {...props} />} path="/profile" />}
+          <Route render={(pr) => <Home {...pr} {...props} />} path="/" />
         </Switch>
       </>
     );

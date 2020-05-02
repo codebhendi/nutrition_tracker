@@ -6,8 +6,8 @@ const cors = require('cors');
 const efu = require('express-fileupload');
 
 const authRoutes = require('./routes/authRoutes');
-const mealsRoutes = require('./routes/mealsRoutes');
 const adminRoutes = require('./routes/adminRoutes');
+const routes = require('./routes/routes');
 
 const app = express();
 
@@ -23,8 +23,8 @@ app.use(bodyParser.urlencoded({ extended: false, limit: '50mb' }));
 app.use(cookieParser());
 
 app.use('/auth', authRoutes);
-app.use('/meals', mealsRoutes);
 app.use('/admin', adminRoutes);
+app.use('/', routes);
 
 app.use((req, res, next) => {
   const err = new Error('Not Found');

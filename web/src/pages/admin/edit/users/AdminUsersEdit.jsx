@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Axios from 'axios';
+import PropTypes from 'prop-types';
+import { Redirect } from 'react-router-dom';
 import Typography from '@material-ui/core/Typography';
 import CardContent from '@material-ui/core/CardContent';
 import Container from '@material-ui/core/Container';
@@ -9,11 +11,9 @@ import CircularProgress from '@material-ui/core/CircularProgress';
 import Button from '@material-ui/core/Button';
 import green from '@material-ui/core/colors/green';
 import makeStyles from '@material-ui/styles/makeStyles';
-import { Link, Redirect } from 'react-router-dom';
-import PropTypes from 'prop-types';
 import { ToastContainer, toast } from 'react-toastify';
 
-import { node } from '../../urls';
+import { node } from '../../../../urls';
 
 const useStyles = makeStyles(() => ({
   loader: {
@@ -40,74 +40,106 @@ const useStyles = makeStyles(() => ({
   },
 }));
 
-const Login = ({ user, updateUser }) => {
+const AdminUsersEdit = ({ user, match }) => {
+  const { params: { id } } = match;
   const classes = useStyles();
   const [loading, setLoading] = useState(false);
-  const [credentials, setCredentials] = useState({ username: '', password: '' });
+  const [formObject, setFormObject] = useState({ username: '', caloriePerDay: '' });
 
-  // handle login form input changes to store them in state
-  const handleChange = (event) => {
-    const { target: { name, value } } = event;
-
-    setCredentials({ ...credentials, [name]: value });
-  };
-
-  const login = async () => {
-    const { username, password } = credentials;
-
-    if (!username || !password) {
-      toast.error('Invalid email or password.');
-    }
-
+  const getUserData = useCallback(async () => {
     const options = {
-      method: 'post',
-      url: `${node}/auth/login`,
-      data: { username: username.trim(), password },
+      method: 'get',
+      url: `${node}/admin/users/${id}`,
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${window.localStorage.authToken}`,
+      },
     };
 
     setLoading(true);
 
     try {
-      const { data: { token, user: newUser } } = await Axios(options);
-      window.localStorage.setItem('authToken', token);
-
-      toast.success('User logged in. Please wait redirecting');
-      updateUser(newUser);
+      const { data: { message: { username: u, calorie_per_day: cpd } } } = await Axios(options);
+      // covnerting date to canada date format so that it can show proper date in date type field.
+      setFormObject({ username: u, caloriePerDay: cpd });
     } catch (e) {
-      console.log('login error', e);
-      toast.error('Wrong email or password. Please check and retry');
+      console.log(e);
+      toast.error('Unable to find user to edit');
     } finally { setLoading(false); }
+  }, [id]);
+
+  useEffect(() => {
+    getUserData();
+  }, [getUserData]);
+
+  // handle login form input changes to store them in state
+  const handleChange = (event) => {
+    const { target: { name, value } } = event;
+
+    setFormObject({ ...formObject, [name]: value });
   };
 
-  // method to submit login form so that the user can be authenticated
-  const handleSubmit = () => {
-    if (loading) return;
+  const checkForm = () => {
+    try {
+      if (!formObject.username) {
+        toast.error('No username, please enter an username');
+        return true;
+      }
 
-    login(credentials);
+      const value = parseFloat(formObject.caloriePerDay);
+
+      if (!value || Number.isNaN(value) || value < 100) {
+        toast.error('No calori per day, should be greater than 100');
+        return true;
+      }
+
+      return false;
+    } catch (e) {
+      console.log(e);
+      return true;
+    }
+  };
+
+  const handleSubmit = async () => {
+    if (checkForm()) return;
+
+    const options = {
+      method: 'post',
+      url: `${node}/admin/users/${id}`,
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${window.localStorage.authToken}`,
+      },
+      data: formObject,
+    };
+
+    setLoading(true);
+
+    try {
+      await Axios(options);
+      toast.success('User updated');
+    } catch (e) {
+      console.log(e);
+      toast.error('Unable to update user');
+    } finally { setLoading(false); }
   };
 
   const handleKeyPress = (event) => { if (event.key === 'Enter') handleSubmit(); };
 
-  if (user) return <Redirect to="/" />;
+  if (!user) return <Redirect to="/login" />;
 
-  const { username, password } = credentials;
+  const { username, caloriePerDay } = formObject;
 
   return (
-    <Container maxWidth="sm">
-      <div className="login-container">
-        <Card className="form-card">
-          <div className="photo-cover">
-            <CardContent
-              title="Login"
-              className="form-heading"
-            >
-              <Typography variant="h4" component="h2" className="white-bold">
-                Login
-              </Typography>
-            </CardContent>
-          </div>
+    <Container maxWidth="md">
+      <div>
+        <Card>
+          <CardContent title="Add Meals">
+            <Typography variant="h4" component="h4">
+              Edit User
+            </Typography>
+          </CardContent>
           <CardContent onKeyPress={handleKeyPress}>
-            <br />
             <TextField
               label="Username"
               margin="normal"
@@ -120,17 +152,16 @@ const Login = ({ user, updateUser }) => {
               value={username}
             />
             <TextField
-              label="Password"
-              type="password"
-              placeholder="Password"
-              autoComplete="current-password"
+              label="Calorie Per Day"
+              type="number"
+              placeholder="Calorie Per Day"
               margin="normal"
               variant="outlined"
               fullWidth
               InputLabelProps={{ shrink: true }}
-              name="password"
+              name="caloriePerDay"
               onChange={handleChange}
-              value={password}
+              value={caloriePerDay}
             />
             <div style={{ display: 'flex' }}>
               <div className={classes.wrapper}>
@@ -150,9 +181,6 @@ const Login = ({ user, updateUser }) => {
               </div>
             </div>
           </CardContent>
-          <CardContent>
-            <Link to="/signup">Create Account</Link>
-          </CardContent>
         </Card>
       </div>
       <ToastContainer position="bottom-right" hideProgressBar />
@@ -160,11 +188,11 @@ const Login = ({ user, updateUser }) => {
   );
 };
 
-Login.propTypes = {
+AdminUsersEdit.propTypes = {
   user: PropTypes.shape({}),
-  updateUser: PropTypes.func.isRequired,
+  match: PropTypes.shape({ params: PropTypes.shape({ id: PropTypes.string }) }).isRequired,
 };
 
-Login.defaultProps = { user: null };
+AdminUsersEdit.defaultProps = { user: null };
 
-export default Login;
+export default AdminUsersEdit;

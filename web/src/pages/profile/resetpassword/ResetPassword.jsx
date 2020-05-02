@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import Axios from 'axios';
 import PropTypes from 'prop-types';
+import Axios from 'axios';
 import { Redirect } from 'react-router-dom';
 import Typography from '@material-ui/core/Typography';
 import CardContent from '@material-ui/core/CardContent';
@@ -13,7 +13,7 @@ import green from '@material-ui/core/colors/green';
 import makeStyles from '@material-ui/styles/makeStyles';
 import { ToastContainer, toast } from 'react-toastify';
 
-import { node } from '../../urls';
+import { node } from '../../../urls';
 
 const useStyles = makeStyles(() => ({
   loader: {
@@ -40,48 +40,68 @@ const useStyles = makeStyles(() => ({
   },
 }));
 
-const Add = ({ user }) => {
+const Profile = ({ user }) => {
   const classes = useStyles();
   const [loading, setLoading] = useState(false);
-  const [formObject, setFormObject] = useState({ description: '', calorieCount: '' });
+  const [formObject, setFormObject] = useState({
+    currPassword: '',
+    newPassword1: '',
+    newPassword2: '',
+  });
 
-  // handle login form input changes to store them in state
   const handleChange = (event) => {
-    const { target: { name, value } } = event;
+    event.preventDefault();
+    const { name, value } = event.target;
 
     setFormObject({ ...formObject, [name]: value });
   };
 
+  const validate = () => {
+    if (!formObject.username) {
+      toast.error('No username specified');
+      return true;
+    }
+
+    if (!formObject.caloriePerDay >= 100) {
+      toast.error('Calories Per Day must be greater than 100');
+      return true;
+    }
+
+    return false;
+  };
+
   const handleSubmit = async () => {
-    if (!user) return;
+    if (validate()) return;
 
     const options = {
       method: 'post',
-      url: `${node}/meals/add`,
+      url: `${node}/profile/resetpassword`,
       headers: {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${window.localStorage.authToken}`,
       },
-      data: formObject,
+      data: { ...formObject },
     };
 
     setLoading(true);
 
     try {
       await Axios(options);
-      toast.success('Added new meal');
-      setFormObject({ description: '', calorieCount: '' });
+      toast.success('Updated profile');
+      setFormObject({ description: '', calorieCount: '', date: '' });
     } catch (e) {
       console.log(e);
-      toast.error('Unable to add new meal');
+      toast.error('Unable to update profile');
     } finally { setLoading(false); }
   };
 
-  const handleKeyPress = (event) => { if (event.key === 'Enter') handleSubmit(); };
-
   if (!user) return <Redirect to="/login" />;
 
-  const { description, calorieCount } = formObject;
+  const {
+    currPassword, newPassword1, newPassword2,
+  } = formObject;
+
+  const handleKeyPress = (event) => { if (event.key === 'Enter') handleSubmit(); };
 
   return (
     <Container maxWidth="md">
@@ -89,32 +109,45 @@ const Add = ({ user }) => {
         <Card>
           <CardContent title="Add Meals">
             <Typography variant="h4" component="h4">
-              Add Meal
+              Profile
             </Typography>
           </CardContent>
           <CardContent onKeyPress={handleKeyPress}>
             <TextField
-              label="Description"
+              label="Current Password"
+              type="password"
+              placeholder="Password"
               margin="normal"
               variant="outlined"
-              placeholder="Description"
               fullWidth
               InputLabelProps={{ shrink: true }}
-              name="description"
+              name="currPassword"
               onChange={handleChange}
-              value={description}
+              value={currPassword}
             />
             <TextField
-              label="Calorie Count"
-              type="number"
-              placeholder="Calorie Count"
+              label="New Password"
+              type="password"
+              placeholder="Password"
               margin="normal"
               variant="outlined"
               fullWidth
               InputLabelProps={{ shrink: true }}
-              name="calorieCount"
+              name="newPassword1"
               onChange={handleChange}
-              value={calorieCount}
+              value={newPassword1}
+            />
+            <TextField
+              label="Re-enter Password"
+              type="password"
+              placeholder="Password"
+              margin="normal"
+              variant="outlined"
+              fullWidth
+              InputLabelProps={{ shrink: true }}
+              name="newPassword2"
+              onChange={handleChange}
+              value={newPassword2}
             />
             <div style={{ display: 'flex' }}>
               <div className={classes.wrapper}>
@@ -141,10 +174,10 @@ const Add = ({ user }) => {
   );
 };
 
-Add.propTypes = {
+Profile.propTypes = {
   user: PropTypes.shape({}),
 };
 
-Add.defaultProps = { user: null };
+Profile.defaultProps = { user: null };
 
-export default Add;
+export default Profile;

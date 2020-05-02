@@ -7,12 +7,14 @@ exports.up = (knex) => (
       table.string('password').notNullable();
       table.bool('admin').defaultTo(false);
       table.bool('is_activated').defaultTo(false);
+      table.integer('calorie_per_day').notNullable().defaultTo(200);
       table.timestamp('created_at').defaultTo(knex.raw('now()'));
     })
     .createTable('calorie_count', (table) => {
       table.increments('id').primary();
       table.text('description').notNullable();
       table.float('calories').notNullable();
+      table.date('date').notNullable();
       table.integer('created_by').references('users.id').notNullable();
       table.timestamp('created_at').defaultTo(knex.raw('now()'));
     })

@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import Axios from 'axios';
+import PropTypes from 'prop-types';
+import { Redirect } from 'react-router-dom';
 import Typography from '@material-ui/core/Typography';
 import CardContent from '@material-ui/core/CardContent';
 import Container from '@material-ui/core/Container';
@@ -9,11 +11,9 @@ import CircularProgress from '@material-ui/core/CircularProgress';
 import Button from '@material-ui/core/Button';
 import green from '@material-ui/core/colors/green';
 import makeStyles from '@material-ui/styles/makeStyles';
-import { Link, Redirect } from 'react-router-dom';
-import PropTypes from 'prop-types';
 import { ToastContainer, toast } from 'react-toastify';
 
-import { node } from '../../urls';
+import { node } from '../../../urls';
 
 const useStyles = makeStyles(() => ({
   loader: {
@@ -40,97 +40,95 @@ const useStyles = makeStyles(() => ({
   },
 }));
 
-const Login = ({ user, updateUser }) => {
+const Add = ({ user }) => {
   const classes = useStyles();
   const [loading, setLoading] = useState(false);
-  const [credentials, setCredentials] = useState({ username: '', password: '' });
+  const [formObject, setFormObject] = useState({ description: '', calorieCount: '', date: '' });
 
   // handle login form input changes to store them in state
   const handleChange = (event) => {
     const { target: { name, value } } = event;
 
-    setCredentials({ ...credentials, [name]: value });
+    setFormObject({ ...formObject, [name]: value });
   };
 
-  const login = async () => {
-    const { username, password } = credentials;
+  const handleSubmit = async () => {
+    if (!user) return;
 
-    if (!username || !password) {
-      toast.error('Invalid email or password.');
-    }
+    if (!formObject.description || !formObject.date || !formObject.calorieCount) return;
 
     const options = {
       method: 'post',
-      url: `${node}/auth/login`,
-      data: { username: username.trim(), password },
+      url: `${node}/meals/add`,
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${window.localStorage.authToken}`,
+      },
+      data: formObject,
     };
 
     setLoading(true);
 
     try {
-      const { data: { token, user: newUser } } = await Axios(options);
-      window.localStorage.setItem('authToken', token);
-
-      toast.success('User logged in. Please wait redirecting');
-      updateUser(newUser);
+      await Axios(options);
+      toast.success('Added new meal');
+      setFormObject({ description: '', calorieCount: '', date: '' });
     } catch (e) {
-      console.log('login error', e);
-      toast.error('Wrong email or password. Please check and retry');
+      console.log(e);
+      toast.error('Unable to add new meal');
     } finally { setLoading(false); }
-  };
-
-  // method to submit login form so that the user can be authenticated
-  const handleSubmit = () => {
-    if (loading) return;
-
-    login(credentials);
   };
 
   const handleKeyPress = (event) => { if (event.key === 'Enter') handleSubmit(); };
 
-  if (user) return <Redirect to="/" />;
+  if (!user) return <Redirect to="/login" />;
 
-  const { username, password } = credentials;
+  const { description, calorieCount, date } = formObject;
 
   return (
-    <Container maxWidth="sm">
-      <div className="login-container">
-        <Card className="form-card">
-          <div className="photo-cover">
-            <CardContent
-              title="Login"
-              className="form-heading"
-            >
-              <Typography variant="h4" component="h2" className="white-bold">
-                Login
-              </Typography>
-            </CardContent>
-          </div>
+    <Container maxWidth="md">
+      <div>
+        <Card>
+          <CardContent title="Add Meals">
+            <Typography variant="h4" component="h4">
+              Add Meal
+            </Typography>
+          </CardContent>
           <CardContent onKeyPress={handleKeyPress}>
-            <br />
             <TextField
-              label="Username"
+              label="Description"
               margin="normal"
               variant="outlined"
-              placeholder="Username"
+              placeholder="Description"
               fullWidth
               InputLabelProps={{ shrink: true }}
-              name="username"
+              name="description"
               onChange={handleChange}
-              value={username}
+              value={description}
             />
             <TextField
-              label="Password"
-              type="password"
-              placeholder="Password"
-              autoComplete="current-password"
+              label="Calorie Count"
+              type="number"
+              placeholder="Calorie Count"
               margin="normal"
               variant="outlined"
               fullWidth
               InputLabelProps={{ shrink: true }}
-              name="password"
+              name="calorieCount"
               onChange={handleChange}
-              value={password}
+              value={calorieCount}
+            />
+            <TextField
+              label="Date"
+              type="date"
+              placeholder="Date"
+              margin="normal"
+              variant="outlined"
+              fullWidth
+              InputLabelProps={{ shrink: true }}
+              name="date"
+              onChange={handleChange}
+              value={date}
             />
             <div style={{ display: 'flex' }}>
               <div className={classes.wrapper}>
@@ -150,9 +148,6 @@ const Login = ({ user, updateUser }) => {
               </div>
             </div>
           </CardContent>
-          <CardContent>
-            <Link to="/signup">Create Account</Link>
-          </CardContent>
         </Card>
       </div>
       <ToastContainer position="bottom-right" hideProgressBar />
@@ -160,11 +155,10 @@ const Login = ({ user, updateUser }) => {
   );
 };
 
-Login.propTypes = {
+Add.propTypes = {
   user: PropTypes.shape({}),
-  updateUser: PropTypes.func.isRequired,
 };
 
-Login.defaultProps = { user: null };
+Add.defaultProps = { user: null };
 
-export default Login;
+export default Add;

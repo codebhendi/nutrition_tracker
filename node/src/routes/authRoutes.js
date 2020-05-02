@@ -20,7 +20,7 @@ router.post('/signup', async (req, res) => {
 
     if (user) throw new Error('user aready exist');
 
-    const newUser = await authHelpers.createUser(req, res);
+    const [newUser] = await authHelpers.createUser(req, res);
     const token = localAuth.encodeToken(newUser);
 
     return res.status(200).json({ message: 'user created', user: newUser, token });

@@ -151,7 +151,7 @@ const Signup = ({ user, updateUser }) => {
             </div>
           </CardContent>
           <CardContent>
-            <Link to="/forgot">Forgot password?</Link>
+            <Link to="/login">Login</Link>
           </CardContent>
         </Card>
       </div>
