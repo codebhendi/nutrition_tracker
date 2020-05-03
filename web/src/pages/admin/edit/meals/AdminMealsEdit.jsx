@@ -42,7 +42,7 @@ const useStyles = makeStyles(() => ({
 
 // Component to edit meal
 const AdminMealsEdit = ({ user, match }) => {
-  // Obtain meal id from url paams
+  // Obtain meal id from url params
   const { params: { id } } = match;
   // Classes to style this component
   const classes = useStyles();
@@ -50,6 +50,8 @@ const AdminMealsEdit = ({ user, match }) => {
   const [loading, setLoading] = useState(false);
   // Variable storing data to be updated in meal form
   const [formObject, setFormObject] = useState({ description: '', calories: '', date: '' });
+  // Redirect string
+  const [redirectString, setRedirectString] = useState('');
 
   // Function to obtain meal data using obtained id.
   const getMealData = useCallback(async () => {
@@ -90,8 +92,10 @@ const AdminMealsEdit = ({ user, match }) => {
     setFormObject({ ...formObject, [name]: value });
   };
 
-  // Function to handle submission of meal updation function.
+  // Function to handle submission of meal updation form and validity.
   const handleSubmit = async () => {
+    if (!formObject.description || !formObject.date || !formObject.calories) return;
+
     const options = {
       method: 'post',
       url: `${node}/admin/meals/${id}`,
@@ -113,11 +117,36 @@ const AdminMealsEdit = ({ user, match }) => {
     } finally { setLoading(false); }
   };
 
+  // Function to handle submission of meal deletion.
+  const handleDelete = async () => {
+    const options = {
+      method: 'post',
+      url: `${node}/admin/meals/delete/${id}`,
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${window.localStorage.authToken}`,
+      },
+    };
+
+    setLoading(true);
+
+    try {
+      await Axios(options);
+      toast.success('Meal deleted');
+      setRedirectString('/admin/meals');
+    } catch (e) {
+      console.log(e);
+      toast.error('Unable to update meal');
+    } finally { setLoading(false); }
+  };
+
   // Function to handle enter key press on the form to submit it then.
   const handleKeyPress = (event) => { if (event.key === 'Enter') handleSubmit(); };
 
   // Check if admin.
   if (!user || !user.admin) return <Redirect to="/login" />;
+
+  if (redirectString) return <Redirect to={redirectString} push />;
 
   const { description, calories, date } = formObject;
 
@@ -177,6 +206,23 @@ const AdminMealsEdit = ({ user, match }) => {
                   size="large"
                 >
                   SUBMIT
+                </Button>
+                {loading && (
+                  <CircularProgress size={24} className={classes.buttonProgress} />
+                )}
+              </div>
+            </div>
+            <div style={{ display: 'flex' }}>
+              <div className={classes.wrapper}>
+                <Button
+                  variant="contained"
+                  color="secondary"
+                  disabled={loading}
+                  onClick={handleDelete}
+                  style={{ width: '100%' }}
+                  size="large"
+                >
+                  DELETE
                 </Button>
                 {loading && (
                   <CircularProgress size={24} className={classes.buttonProgress} />

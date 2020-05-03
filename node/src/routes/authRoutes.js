@@ -20,7 +20,7 @@ router.post('/signup', async (req, res) => {
 
   try {
     // Check if user with same usename already exists
-    const user = await knex('users').where({ parseUsername }).first();
+    const user = await knex('users').where({ username: parseUsername }).first();
 
     if (user) throw new Error('user aready exist');
 
@@ -55,7 +55,7 @@ router.post('/login', async (req, res) => {
   if (!parseUsername || !password) return res.status(500).json({ message: 'Invalid request' });
 
   try {
-    const user = await knex('users').where({ parseUsername }).first();
+    const user = await knex('users').where({ username: parseUsername }).first();
 
     if (!user || !authHelpers.comparePassword(password, user.password)) {
       return res.status(401).json({ message: 'Incorrect password or username' });

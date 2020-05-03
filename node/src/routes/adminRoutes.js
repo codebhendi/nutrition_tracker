@@ -8,6 +8,28 @@ const router = express.Router();
 // This file contains all routes used by the admin interface to update, delete and update an user
 // or a meal
 
+// Route to delete a meal for any user
+router.post('/meals/delete/:id', authHelpers.ensureAuthenticated, async (req, res) => {
+  const { user } = req;
+
+  // check if user is admin
+  if (!user.admin) return res.status(401).json({ message: 'Unauthorized' });
+
+  // Obtain id of meal from url params to be deleted from request body.
+  const { id } = req.params;
+
+  try {
+    // Make the deltion using knex
+    await knex('calorie_count').del().where({ id });
+
+    // If no errors return success
+    return res.status(200).json({ message: 'deleted meal' });
+  } catch (e) {
+    console.log(e);
+    return res.status(500).json({ message: 'Unable to delete meal', error: e });
+  }
+});
+
 // Route to obtain a meal for any user to be edited
 router.get('/meals/:id', authHelpers.ensureAuthenticated, async (req, res) => {
   const { user } = req;
@@ -45,6 +67,10 @@ router.post('/meals/:id', authHelpers.ensureAuthenticated, async (req, res) => {
   const { id } = req.params;
   const { description, calorieCount, date } = req.body;
 
+  if (!description || !calorieCount || !date) {
+    return res.status(500).json({ messge: 'Invalid values' });
+  }
+
   try {
     // Make the update using knex
     await knex('calorie_count')
@@ -80,6 +106,28 @@ router.get('/meals', authHelpers.ensureAuthenticated, async (req, res) => {
   } catch (e) {
     console.log(e);
     return res.status(500).json({ message: 'Unable to obtain meals', error: e });
+  }
+});
+
+// Route to update an user to be edited from the id in url params
+router.post('/users/delete/:id', authHelpers.ensureAuthenticated, async (req, res) => {
+  const { user } = req;
+
+  // check if user is admin
+  if (!user.admin) return res.status(401).json({ message: 'Unauthorized' });
+  // Obtain user id to be deleted.
+  const { id } = req.params;
+
+  // Update users and if success then send proper response
+  try {
+    // Delete from calorie_count all meals created by this user
+    await knex('calorie_count').del().where({ created_by: id });
+    // Delete the user after that
+    await knex('users').del().where({ id });
+    return res.status(200).json({ message: 'deleted user' });
+  } catch (e) {
+    console.log(e);
+    return res.status(500).json({ message: 'Unable to delete user', error: e });
   }
 });
 

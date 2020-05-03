@@ -50,6 +50,8 @@ const Edit = ({ user, match }) => {
   const [loading, setLoading] = useState(false);
   // Variable to store edit meal form variables.
   const [formObject, setFormObject] = useState({ description: '', calories: '', date: '' });
+  // Redirect value
+  const [redirectString, setRedirect] = useState('');
 
   // Obtain meal data by making an api call
   const getMealData = useCallback(async () => {
@@ -89,7 +91,7 @@ const Edit = ({ user, match }) => {
 
   // Function to handle edit meal form submission and form validity
   const handleSubmit = async () => {
-    if (!formObject.description || !formObject.date || !formObject.calorieCount) return;
+    if (!formObject.description || !formObject.date || !formObject.calories) return;
 
     const options = {
       method: 'post',
@@ -112,11 +114,36 @@ const Edit = ({ user, match }) => {
     } finally { setLoading(false); }
   };
 
+  // Function to handle edit meal form submission and form validity
+  const handleDelete = async () => {
+    const options = {
+      method: 'post',
+      url: `${node}/meals/delete/${id}`,
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${window.localStorage.authToken}`,
+      },
+    };
+
+    setLoading(true);
+
+    try {
+      await Axios(options);
+      toast.success('Meal updated');
+      setRedirect('/meals');
+    } catch (e) {
+      console.log(e);
+      toast.error('Unable to update meal');
+    } finally { setLoading(false); }
+  };
+
   // Handle enter key press event on form
   const handleKeyPress = (event) => { if (event.key === 'Enter') handleSubmit(); };
 
   // Check if user is not logged in
   if (!user) return <Redirect to="/login" />;
+
+  if (redirectString) return <Redirect to={redirectString} push />;
 
   const { description, calories, date } = formObject;
 
@@ -176,6 +203,23 @@ const Edit = ({ user, match }) => {
                   size="large"
                 >
                   SUBMIT
+                </Button>
+                {loading && (
+                  <CircularProgress size={24} className={classes.buttonProgress} />
+                )}
+              </div>
+            </div>
+            <div style={{ display: 'flex' }}>
+              <div className={classes.wrapper}>
+                <Button
+                  variant="contained"
+                  color="secondary"
+                  disabled={loading}
+                  onClick={handleDelete}
+                  style={{ width: '100%' }}
+                  size="large"
+                >
+                  DELETE
                 </Button>
                 {loading && (
                   <CircularProgress size={24} className={classes.buttonProgress} />

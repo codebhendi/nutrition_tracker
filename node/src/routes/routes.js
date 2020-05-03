@@ -28,6 +28,23 @@ router.post('/meals/add', authHelpers.ensureAuthenticated, async (req, res) => {
   }
 });
 
+// Route to delete a meal of an user represented by the id in url parms.
+router.post('/meals/delete/:id', authHelpers.ensureAuthenticated, async (req, res) => {
+  // Obtain user and data from requestt.
+  const { user } = req;
+  // Obtain meal id from url params
+  const { id } = req.params;
+
+  try {
+    // Delete meal using meal id and send success response
+    await knex('calorie_count').del().where({ created_by: user.id, id });
+    return res.status(200).json({ message: 'meal deleted' });
+  } catch (e) {
+    console.log(e);
+    return res.status(500).json({ message: 'unable to delete meal', error: e });
+  }
+});
+
 // Route to get a meal of an user represented by the id in url parms.
 router.get('/meals/:id', authHelpers.ensureAuthenticated, async (req, res) => {
   // Obtain user and data from requestt.
@@ -50,7 +67,7 @@ router.get('/meals/:id', authHelpers.ensureAuthenticated, async (req, res) => {
   }
 });
 
-// Route to update a meals of an user represented by the id in url parms.
+// Route to update a meal of an user represented by the id in url parms.
 router.post('/meals/:id', authHelpers.ensureAuthenticated, async (req, res) => {
   // Obtain user and data from requestt.
   const { user } = req;
@@ -145,7 +162,8 @@ router.post('/profile', authHelpers.ensureAuthenticated, async (req, res) => {
     if (!username) return res.status(500).json({ message: 'username length must be more than 0' });
 
     // Update user information.
-    await knex('users').update({ username, calorie_per_day: caloriePerDay }).where({ id: user.id });
+    await knex('users')
+      .update({ username: parseUsername, calorie_per_day: caloriePerDay }).where({ id: user.id });
     return res.status(200).json({ message: 'uesr updated' });
   } catch (e) {
     console.log(e);

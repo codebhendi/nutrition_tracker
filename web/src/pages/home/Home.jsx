@@ -6,7 +6,7 @@ import PropTypes from 'prop-types';
 const Home = ({ user }) => {
   if (!user) return <Redirect to="/login" />;
 
-  if (user.admin) return <Redirect to="/admin" />;
+  if (user.admin) return <Redirect to="/admin/meals" />;
 
   return <Redirect to="/meals" />;
 };

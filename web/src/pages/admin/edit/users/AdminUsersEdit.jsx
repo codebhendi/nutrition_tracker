@@ -42,10 +42,16 @@ const useStyles = makeStyles(() => ({
 
 // Component to edit user
 const AdminUsersEdit = ({ user, match }) => {
+  // Obtain meal id from url params
   const { params: { id } } = match;
+  // Classes to style this component
   const classes = useStyles();
+  // Variable storing loading state.
   const [loading, setLoading] = useState(false);
+  // Variable storing data to be updated in user form
   const [formObject, setFormObject] = useState({ username: '', caloriePerDay: '' });
+  // Redirection string
+  const [redirectString, setRedirectString] = useState('');
 
   // Function to obtain user data using obtained id
   const getUserData = useCallback(async () => {
@@ -108,6 +114,29 @@ const AdminUsersEdit = ({ user, match }) => {
     }
   };
 
+  // Function to handle deletion of user.
+  const handleDelete = async () => {
+    const options = {
+      method: 'post',
+      url: `${node}/admin/users/delete/${id}`,
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${window.localStorage.authToken}`,
+      },
+    };
+
+    setLoading(true);
+
+    try {
+      await Axios(options);
+      toast.success('User updated');
+      setRedirectString('/admin/users');
+    } catch (e) {
+      console.log(e);
+      toast.error('Unable to update user');
+    } finally { setLoading(false); }
+  };
+
   // Function to handle submission of user updation form.
   const handleSubmit = async () => {
     if (checkForm()) return;
@@ -138,6 +167,8 @@ const AdminUsersEdit = ({ user, match }) => {
 
   // Check if admin.
   if (!user || !user.admin) return <Redirect to="/login" />;
+
+  if (redirectString) return <Redirect to={redirectString} push />;
 
   const { username, caloriePerDay } = formObject;
 
@@ -185,6 +216,23 @@ const AdminUsersEdit = ({ user, match }) => {
                   size="large"
                 >
                   SUBMIT
+                </Button>
+                {loading && (
+                  <CircularProgress size={24} className={classes.buttonProgress} />
+                )}
+              </div>
+            </div>
+            <div style={{ display: 'flex' }}>
+              <div className={classes.wrapper}>
+                <Button
+                  variant="contained"
+                  color="secondary"
+                  disabled={loading}
+                  onClick={handleDelete}
+                  style={{ width: '100%' }}
+                  size="large"
+                >
+                  DELETE
                 </Button>
                 {loading && (
                   <CircularProgress size={24} className={classes.buttonProgress} />
