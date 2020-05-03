@@ -9,11 +9,14 @@ const router = express.Router();
 router.post('/meals/add', authHelpers.ensureAuthenticated, async (req, res) => {
   const { user } = req;
 
+  // Obtain fields to be inserted from request body
   const { description, calorieCount, date } = req.body;
 
+  // Check if those values are valid
   if (!description || !calorieCount || !date) return res.status(500).json({ message: 'Description ,calorie count and date are required' });
 
   try {
+    // Insert these values and send success reponse
     await knex('calorie_count')
       .insert({
         description, calories: calorieCount, date, created_by: user.id,
@@ -29,10 +32,11 @@ router.post('/meals/add', authHelpers.ensureAuthenticated, async (req, res) => {
 router.get('/meals/:id', authHelpers.ensureAuthenticated, async (req, res) => {
   // Obtain user and data from requestt.
   const { user } = req;
+  // Obtain meal id from request params
   const { id } = req.params;
 
   try {
-    // Obtain meal data from the id using sql query
+    // Obtain meal data from the id using sql query adn send as response
     const query = `
       select id, description, calories, date from calorie_count
       where created_by=? and id=? order by created_at
@@ -50,10 +54,16 @@ router.get('/meals/:id', authHelpers.ensureAuthenticated, async (req, res) => {
 router.post('/meals/:id', authHelpers.ensureAuthenticated, async (req, res) => {
   // Obtain user and data from requestt.
   const { user } = req;
+  // Obtain meal id from url params
   const { id } = req.params;
+  // Obtain values to update meal data.
   const { description, calories, date } = req.body;
 
+  // Chekc if obtained values are valid
+  if (!description || !calories || !date) return res.status(500).json({ message: 'Description ,calorie count and date are required' });
+
   try {
+    // Update values using meal id and send success response
     await knex('calorie_count')
       .update({ description, calories, date })
       .where({ created_by: user.id, id });
@@ -66,17 +76,17 @@ router.post('/meals/:id', authHelpers.ensureAuthenticated, async (req, res) => {
 
 // Route to get all the meals of an user.
 router.get('/meals', authHelpers.ensureAuthenticated, async (req, res) => {
-  // Obtain user and data from requestt.
   const { user } = req;
 
   try {
-    // Check if user has already stored the information
+    // Query to obtain all meals created for this user.
     const query = `
       select id, description, calories, date from calorie_count
       where created_by=${user.id} order by created_at
     `;
     const { rows: meals } = await knex.raw(query);
 
+    // Query to obtain daily consumption of the user
     const queryConsumption = `
       select date, sum(calories) from calorie_count
       where created_by=${user.id} group by date
@@ -85,6 +95,7 @@ router.get('/meals', authHelpers.ensureAuthenticated, async (req, res) => {
 
     const { rows: consumption } = await knex.raw(queryConsumption);
 
+    // Send consumption and meals to user
     return res.status(200).json({ message: { meals, consumption } });
   } catch (e) {
     console.log(e);
@@ -113,11 +124,18 @@ router.post('/profile/resetpassword', authHelpers.ensureAuthenticated, async (re
   }
 });
 
+// Route to update profile information of an user.
 router.post('/profile', authHelpers.ensureAuthenticated, async (req, res) => {
   const { user } = req;
+  // Obtain information to be updated from request body
   const { username, caloriePerDay } = req.body;
+  // Parse username to remove extra spaces.
+  const parseUsername = username.trim();
 
   try {
+    // Check if values are valid
+    if (!parseUsername) return res.status(500).json({ message: 'Invalid username' });
+
     const cpd = parseFloat(caloriePerDay);
 
     if (cpd < 100 || Number.isNaN(cpd)) {
@@ -126,6 +144,7 @@ router.post('/profile', authHelpers.ensureAuthenticated, async (req, res) => {
 
     if (!username) return res.status(500).json({ message: 'username length must be more than 0' });
 
+    // Update user information.
     await knex('users').update({ username, calorie_per_day: caloriePerDay }).where({ id: user.id });
     return res.status(200).json({ message: 'uesr updated' });
   } catch (e) {

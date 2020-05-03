@@ -116,6 +116,13 @@ router.post('/users/:id', authHelpers.ensureAuthenticated, async (req, res) => {
 
   // Update users and if success then send proper response
   try {
+    if (!username.trim) return res.status(500).json({ message: 'Invalid username' });
+    const value = parseFloat(caloriePerDay);
+
+    if (!value || Number.isNaN(value) || value < 100) {
+      return res.status(500).json({ message: 'Invalid calorie per day' });
+    }
+
     await knex('users')
       .update({ username, calorie_per_day: caloriePerDay })
       .where({ id });

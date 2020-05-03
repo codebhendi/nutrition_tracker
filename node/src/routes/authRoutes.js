@@ -14,7 +14,7 @@ router.post('/signup', async (req, res) => {
   const parseUsername = username.trim();
 
   // Check if username and password are valid
-  if (parseUsername === '' || password === '') {
+  if (!parseUsername || !password) {
     return res.status(200).json({ message: 'Invalid email or password' });
   }
 
@@ -51,6 +51,8 @@ router.post('/login', async (req, res) => {
   const { username, password } = req.body;
   // trim username to remove extra spaces
   const parseUsername = username.trim();
+
+  if (!parseUsername || !password) return res.status(500).json({ message: 'Invalid request' });
 
   try {
     const user = await knex('users').where({ parseUsername }).first();

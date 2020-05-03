@@ -89,7 +89,7 @@ const AdminUsersEdit = ({ user, match }) => {
   // Function to check if all form parameters are in correct domain
   const checkForm = () => {
     try {
-      if (!formObject.username) {
+      if (!formObject.username.trim()) {
         toast.error('No username, please enter an username');
         return true;
       }
