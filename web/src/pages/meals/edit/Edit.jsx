@@ -40,12 +40,18 @@ const useStyles = makeStyles(() => ({
   },
 }));
 
+// Component to edit meal obtained from url params
 const Edit = ({ user, match }) => {
+  // Obtain if from url params
   const { params: { id } } = match;
+  // obtain classes to style component
   const classes = useStyles();
+  // Variable to show loading status.
   const [loading, setLoading] = useState(false);
+  // Variable to store edit meal form variables.
   const [formObject, setFormObject] = useState({ description: '', calories: '', date: '' });
 
+  // Obtain meal data by making an api call
   const getMealData = useCallback(async () => {
     const options = {
       method: 'get',
@@ -59,6 +65,7 @@ const Edit = ({ user, match }) => {
     setLoading(true);
 
     try {
+      // store meal data in state.
       const { data: { message: { description, calories, date } } } = await Axios(options);
       // covnerting date to canada date format so that it can show proper date in date type field.
       setFormObject({ description, calories, date: new Date(date).toLocaleDateString('en-ca') });
@@ -68,20 +75,22 @@ const Edit = ({ user, match }) => {
     } finally { setLoading(false); }
   }, [id]);
 
+  // Using effect to call getMealData as soon as component is rendered
   useEffect(() => {
     getMealData();
   }, [getMealData]);
 
-  // handle login form input changes to store them in state
+  // handle form input changes to store them in state
   const handleChange = (event) => {
     const { target: { name, value } } = event;
-
-    console.log(value);
 
     setFormObject({ ...formObject, [name]: value });
   };
 
+  // Function to handle edit meal form submission and form validity
   const handleSubmit = async () => {
+    if (!formObject.description || !formObject.date || !formObject.calorieCount) return;
+
     const options = {
       method: 'post',
       url: `${node}/meals/${id}`,
@@ -103,8 +112,10 @@ const Edit = ({ user, match }) => {
     } finally { setLoading(false); }
   };
 
+  // Handle enter key press event on form
   const handleKeyPress = (event) => { if (event.key === 'Enter') handleSubmit(); };
 
+  // Check if user is not logged in
   if (!user) return <Redirect to="/login" />;
 
   const { description, calories, date } = formObject;

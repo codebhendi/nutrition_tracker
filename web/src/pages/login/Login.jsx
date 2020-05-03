@@ -40,9 +40,16 @@ const useStyles = makeStyles(() => ({
   },
 }));
 
+// Component to log user in
+// Props:
+// user: User object
+// updateUse: Function to update user in the root component.
 const Login = ({ user, updateUser }) => {
+  // Classes for styling
   const classes = useStyles();
+  // Variable to show loading status
   const [loading, setLoading] = useState(false);
+  // Variable to store login form information
   const [credentials, setCredentials] = useState({ username: '', password: '' });
 
   // handle login form input changes to store them in state
@@ -52,9 +59,11 @@ const Login = ({ user, updateUser }) => {
     setCredentials({ ...credentials, [name]: value });
   };
 
+  // Function to submit login information to api to log user in.
   const login = async () => {
     const { username, password } = credentials;
 
+    // Check validity
     if (!username || !password) {
       toast.error('Invalid email or password.');
     }
@@ -68,10 +77,13 @@ const Login = ({ user, updateUser }) => {
     setLoading(true);
 
     try {
+      // obtain token and user.
       const { data: { token, user: newUser } } = await Axios(options);
+      // Store token to local storage
       window.localStorage.setItem('authToken', token);
 
       toast.success('User logged in. Please wait redirecting');
+      // Store user in root component
       updateUser(newUser);
     } catch (e) {
       console.log('login error', e);
@@ -79,15 +91,17 @@ const Login = ({ user, updateUser }) => {
     } finally { setLoading(false); }
   };
 
-  // method to submit login form so that the user can be authenticated
+  // Function to submit login form so that the user can be authenticated
   const handleSubmit = () => {
     if (loading) return;
 
     login(credentials);
   };
 
+  // Function to handle enter key press on login form to submit the form.
   const handleKeyPress = (event) => { if (event.key === 'Enter') handleSubmit(); };
 
+  // Check if user is already logged in
   if (user) return <Redirect to="/" />;
 
   const { username, password } = credentials;

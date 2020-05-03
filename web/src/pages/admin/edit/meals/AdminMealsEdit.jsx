@@ -40,12 +40,18 @@ const useStyles = makeStyles(() => ({
   },
 }));
 
+// Component to edit meal
 const AdminMealsEdit = ({ user, match }) => {
+  // Obtain meal id from url paams
   const { params: { id } } = match;
+  // Classes to style this component
   const classes = useStyles();
+  // Variable storing loading state.
   const [loading, setLoading] = useState(false);
+  // Variable storing data to be updated in meal form
   const [formObject, setFormObject] = useState({ description: '', calories: '', date: '' });
 
+  // Function to obtain meal data using obtained id.
   const getMealData = useCallback(async () => {
     const options = {
       method: 'get',
@@ -68,17 +74,23 @@ const AdminMealsEdit = ({ user, match }) => {
     } finally { setLoading(false); }
   }, [id]);
 
+  // Using use effect to call getMealData as soon as component is rendered.
   useEffect(() => {
     getMealData();
   }, [getMealData]);
 
-  // handle login form input changes to store them in state
+  // Function to handle change in meal form.
   const handleChange = (event) => {
-    const { target: { name, value } } = event;
+    event.preventDefault();
 
+    // Obtain name and value from event target
+    const { name, value } = event.target;
+
+    // Use spread operator to store previous value and update newly obtained field value.
     setFormObject({ ...formObject, [name]: value });
   };
 
+  // Function to handle submission of meal updation function.
   const handleSubmit = async () => {
     const options = {
       method: 'post',
@@ -101,9 +113,11 @@ const AdminMealsEdit = ({ user, match }) => {
     } finally { setLoading(false); }
   };
 
+  // Function to handle enter key press on the form to submit it then.
   const handleKeyPress = (event) => { if (event.key === 'Enter') handleSubmit(); };
 
-  if (!user) return <Redirect to="/login" />;
+  // Check if admin.
+  if (!user || !user.admin) return <Redirect to="/login" />;
 
   const { description, calories, date } = formObject;
 
@@ -111,7 +125,7 @@ const AdminMealsEdit = ({ user, match }) => {
     <Container maxWidth="md">
       <div>
         <Card>
-          <CardContent title="Add Meals">
+          <CardContent title="Edit User">
             <Typography variant="h4" component="h4">
               Edit Meal
             </Typography>
@@ -178,7 +192,7 @@ const AdminMealsEdit = ({ user, match }) => {
 };
 
 AdminMealsEdit.propTypes = {
-  user: PropTypes.shape({}),
+  user: PropTypes.shape({ admin: PropTypes.bool }),
   match: PropTypes.shape({ params: PropTypes.shape({ id: PropTypes.string }) }).isRequired,
 };
 

@@ -40,21 +40,24 @@ const useStyles = makeStyles(() => ({
   },
 }));
 
+// Component to add meals
 const Add = ({ user }) => {
+  // Classes to style component
   const classes = useStyles();
+  // Variable to show loading status.
   const [loading, setLoading] = useState(false);
+  // Variable to store add meal form variables.
   const [formObject, setFormObject] = useState({ description: '', calorieCount: '', date: '' });
 
-  // handle login form input changes to store them in state
+  // handle orm input changes to store them in state
   const handleChange = (event) => {
     const { target: { name, value } } = event;
 
     setFormObject({ ...formObject, [name]: value });
   };
 
+  // Handle form submission and verify variable validity
   const handleSubmit = async () => {
-    if (!user) return;
-
     if (!formObject.description || !formObject.date || !formObject.calorieCount) return;
 
     const options = {
@@ -79,8 +82,10 @@ const Add = ({ user }) => {
     } finally { setLoading(false); }
   };
 
+  // Handle enter key press event on form
   const handleKeyPress = (event) => { if (event.key === 'Enter') handleSubmit(); };
 
+  // Check if user is not logged in
   if (!user) return <Redirect to="/login" />;
 
   const { description, calorieCount, date } = formObject;

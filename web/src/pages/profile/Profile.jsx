@@ -40,13 +40,18 @@ const useStyles = makeStyles(() => ({
   },
 }));
 
+// Component to see and edit profile information for a logged in user.
 const Profile = ({ user }) => {
+  // Classes to style component
   const classes = useStyles();
+  // Variable to show laoding status
   const [loading, setLoading] = useState(false);
+  // Variable to store user form information
   const [formObject, setFormObject] = useState({
     username: user.username, caloriePerDay: user.calorie_per_day,
   });
 
+  // Function to handle change in user form and store updated values in state.
   const handleChange = (event) => {
     event.preventDefault();
     const { name, value } = event.target;
@@ -54,6 +59,7 @@ const Profile = ({ user }) => {
     setFormObject({ ...formObject, [name]: value });
   };
 
+  // Function to validated user information.
   const validate = () => {
     try {
       if (!formObject.username) {
@@ -75,6 +81,7 @@ const Profile = ({ user }) => {
     return false;
   };
 
+  // Function to validate and submit user updation form.
   const handleSubmit = async () => {
     if (validate()) return;
 
@@ -99,11 +106,14 @@ const Profile = ({ user }) => {
     } finally { setLoading(false); }
   };
 
+  // Function to handle enter key press on form.
+  const handleKeyPress = (event) => { if (event.key === 'Enter') handleSubmit(); };
+
+
+  // Check if user is logged in.
   if (!user) return <Redirect to="/login" />;
 
   const { username, caloriePerDay } = formObject;
-
-  const handleKeyPress = (event) => { if (event.key === 'Enter') handleSubmit(); };
 
   return (
     <Container maxWidth="md">

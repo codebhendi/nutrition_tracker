@@ -2,6 +2,7 @@ import React from 'react';
 import { Redirect } from 'react-router-dom';
 import PropTypes from 'prop-types';
 
+// Home component where user will be redirected based on their roles.
 const Home = ({ user }) => {
   if (!user) return <Redirect to="/login" />;
 

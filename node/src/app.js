@@ -11,9 +11,6 @@ const routes = require('./routes/routes');
 
 const app = express();
 
-// app.use(express.errorHandler({ dumpExceptions: true, showStack: true }));
-// To enable cors request form other service
-// TO DO: restrict to certain URLs only
 app.use(cors());
 if (process.env.NODE_ENV !== 'test') { app.use(logger('dev')); }
 

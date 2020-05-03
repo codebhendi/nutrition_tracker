@@ -44,13 +44,19 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
+// Component to obtain and show all meals
 const AllMeals = ({ user }) => {
+  // Classes for styling component
   const classes = useStyles();
+  // Pagination variables which decide what page to show and how many rows to display.
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
+  // Variable to store meals and page loading status.
   const [meals, setMeals] = useState([]);
   const [loading, setLoading] = useState(false);
 
+  // Function to obtain meals. In this we make an api request using
+  // stored token.
   const getMeals = useCallback(async () => {
     if (!user) return;
 
@@ -74,17 +80,22 @@ const AllMeals = ({ user }) => {
     } finally { setLoading(false); }
   }, [user]);
 
+  // Use effect to be used so that we can call getMeals as soon as this
+  // component is rendered.
   useEffect(() => { getMeals(); }, [getMeals]);
 
+  // Function to handle change in pages.
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
   };
 
+  // Function to handle change in number of rows per page.
   const handleChangeRowsPerPage = (event) => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
   };
 
+  // Check if the user is not an admin.
   if (!user || !user.admin) return <Redirect to="/login" />;
 
   return (

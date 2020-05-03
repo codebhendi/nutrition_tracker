@@ -46,14 +46,20 @@ const useStyles = makeStyles((theme) => ({
   red: { backgroundColor: '#d24d57' },
 }));
 
+// Component to obtain and show all users
 const AllUsers = ({ user }) => {
+  // Classes for styling component
   const classes = useStyles();
+  // Pagination variables which decide what page to show and how many rows to display.
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
+  // Variable to store users and page loading status.
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  const getMeals = useCallback(async () => {
+  // Function to obtain users. In this we make an api request using
+  // stored token.
+  const getUsers = useCallback(async () => {
     if (!user) return;
 
     const options = {
@@ -76,18 +82,23 @@ const AllUsers = ({ user }) => {
     } finally { setLoading(false); }
   }, [user]);
 
-  useEffect(() => { getMeals(); }, [getMeals]);
+  // Use effect to be used so that we can call getUsers as soon as this
+  // component is rendered.
+  useEffect(() => { getUsers(); }, [getUsers]);
 
+  // Function to handle change in pages.
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
   };
 
+  // Function to handle change in number of rows per page.
   const handleChangeRowsPerPage = (event) => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
   };
 
-  if (!user) return <Redirect to="/login" />;
+  // Check if the user is not an admin.
+  if (!user || !user.admin) return <Redirect to="/login" />;
 
   return (
     <>
@@ -144,7 +155,7 @@ const AllUsers = ({ user }) => {
   );
 };
 
-AllUsers.propTypes = { user: PropTypes.shape({ calorie_per_day: PropTypes.number }) };
+AllUsers.propTypes = { user: PropTypes.shape({ admin: PropTypes.bool }) };
 
 AllUsers.defaultProps = { user: null };
 

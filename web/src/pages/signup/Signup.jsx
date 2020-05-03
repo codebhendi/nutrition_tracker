@@ -40,9 +40,16 @@ const useStyles = makeStyles(() => ({
   },
 }));
 
+// Component to signup new users.
+// Props:
+// user: user object.
+// updateUser: Function to update user in root component.
 const Signup = ({ user, updateUser }) => {
+  // Classe to style component
   const classes = useStyles();
+  // Variable to show loading status.
   const [loading, setLoading] = useState(false);
+  // Form varialbe to store signup form data.
   const [credentials, setCredentials] = useState({ username: '', password: '' });
 
   // handle login form input changes to store them in state
@@ -52,6 +59,7 @@ const Signup = ({ user, updateUser }) => {
     setCredentials({ ...credentials, [name]: value });
   };
 
+  // Function to submit form data to create new user.
   const signUp = async () => {
     const { username, password } = credentials;
 
@@ -68,11 +76,13 @@ const Signup = ({ user, updateUser }) => {
     };
 
     try {
+      // obtain token and user data.
       const { data: { token, user: newUser } } = await Axios(options);
 
+      // Store token in local storage
       window.localStorage.setItem('authToken', token);
       toast.success('User Signed up');
-
+      // Store use in root component.
       updateUser(newUser);
     } catch (e) {
       console.log('login error', e);
@@ -80,14 +90,16 @@ const Signup = ({ user, updateUser }) => {
     } finally { setLoading(false); }
   };
 
-  // method to submit login form so that the user can be authenticated
+  // Function to submit signup form so that the user can be authenticated
   const handleSubmit = () => {
     if (loading) return;
     signUp();
   };
 
+  // Function to handle pressing enter button on signup form.
   const handleKeyPress = (event) => { if (event.key === 'Enter') handleSubmit(); };
 
+  // Check if user is logged in.
   if (user) return <Redirect to="/" />;
 
   const { username, password } = credentials;

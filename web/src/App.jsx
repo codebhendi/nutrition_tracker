@@ -45,6 +45,7 @@ const useStyles = () => ({
   },
 });
 
+// Root component to handle user check and routing of all compoennt.
 class App extends Component {
   constructor(props) {
     super(props);
@@ -52,11 +53,13 @@ class App extends Component {
     this.state = { loading: true, user: null };
   }
 
+  // Method to log user out by clearing user token and removing user from state data.
   logout = () => {
     window.localStorage.clear();
     this.setState({ user: null });
   }
 
+  // Obtain user data from token.
   getUserData = async () => {
     const options = {
       method: 'get',
@@ -77,8 +80,10 @@ class App extends Component {
     } finally { this.setState({ loading: false }); }
   }
 
+  // User component did mount to get user information as soon as possible
   componentDidMount = () => { this.getUserData(); }
 
+  // Function to update user in state.
   updateUser = (userObject) => { this.setState({ user: userObject }); }
 
   render = () => {

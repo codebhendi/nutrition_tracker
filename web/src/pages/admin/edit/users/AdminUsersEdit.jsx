@@ -40,12 +40,14 @@ const useStyles = makeStyles(() => ({
   },
 }));
 
+// Component to edit user
 const AdminUsersEdit = ({ user, match }) => {
   const { params: { id } } = match;
   const classes = useStyles();
   const [loading, setLoading] = useState(false);
   const [formObject, setFormObject] = useState({ username: '', caloriePerDay: '' });
 
+  // Function to obtain user data using obtained id
   const getUserData = useCallback(async () => {
     const options = {
       method: 'get',
@@ -68,17 +70,23 @@ const AdminUsersEdit = ({ user, match }) => {
     } finally { setLoading(false); }
   }, [id]);
 
+  // Using use effect to call getMealData as soon as component is rendered.
   useEffect(() => {
     getUserData();
   }, [getUserData]);
 
-  // handle login form input changes to store them in state
+  // Function to handle change in user form.
   const handleChange = (event) => {
-    const { target: { name, value } } = event;
+    event.preventDefault();
 
+    // Obtain name and value from event target
+    const { name, value } = event.target;
+
+    // Use spread operator to store previous value and update newly obtained field value.
     setFormObject({ ...formObject, [name]: value });
   };
 
+  // Function to check if all form parameters are in correct domain
   const checkForm = () => {
     try {
       if (!formObject.username) {
@@ -89,7 +97,7 @@ const AdminUsersEdit = ({ user, match }) => {
       const value = parseFloat(formObject.caloriePerDay);
 
       if (!value || Number.isNaN(value) || value < 100) {
-        toast.error('No calori per day, should be greater than 100');
+        toast.error('Invalid calorie per day, should be greater than 100');
         return true;
       }
 
@@ -100,6 +108,7 @@ const AdminUsersEdit = ({ user, match }) => {
     }
   };
 
+  // Function to handle submission of user updation form.
   const handleSubmit = async () => {
     if (checkForm()) return;
 
@@ -124,9 +133,11 @@ const AdminUsersEdit = ({ user, match }) => {
     } finally { setLoading(false); }
   };
 
+  // Function to handle enter key press on the form to submit it then.
   const handleKeyPress = (event) => { if (event.key === 'Enter') handleSubmit(); };
 
-  if (!user) return <Redirect to="/login" />;
+  // Check if admin.
+  if (!user || !user.admin) return <Redirect to="/login" />;
 
   const { username, caloriePerDay } = formObject;
 
@@ -134,7 +145,7 @@ const AdminUsersEdit = ({ user, match }) => {
     <Container maxWidth="md">
       <div>
         <Card>
-          <CardContent title="Add Meals">
+          <CardContent title="Edit User">
             <Typography variant="h4" component="h4">
               Edit User
             </Typography>
@@ -189,7 +200,7 @@ const AdminUsersEdit = ({ user, match }) => {
 };
 
 AdminUsersEdit.propTypes = {
-  user: PropTypes.shape({}),
+  user: PropTypes.shape({ admin: PropTypes.bool }),
   match: PropTypes.shape({ params: PropTypes.shape({ id: PropTypes.string }) }).isRequired,
 };
 

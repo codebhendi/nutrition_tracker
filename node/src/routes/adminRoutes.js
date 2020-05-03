@@ -5,18 +5,26 @@ const authHelpers = require('../auth/helpers');
 
 const router = express.Router();
 
+// This file contains all routes used by the admin interface to update, delete and update an user
+// or a meal
 
 // Route to obtain a meal for any user to be edited
 router.get('/meals/:id', authHelpers.ensureAuthenticated, async (req, res) => {
   const { user } = req;
-  const { id } = req.params;
+
+  // check if user is admin
   if (!user.admin) return res.status(401).json({ message: 'Unauthorized' });
 
+  // Obtain meal id from url params
+  const { id } = req.params;
+
   try {
+    // Query to obtain meal for a particular id
     const query = `
       select description, calories, date from calorie_count
       where id=?
     `;
+    // Obtain meal data and send in response
     const { rows: meals } = await knex.raw(query, [id]);
 
     return res.status(200).json({ message: meals[0] });
@@ -30,15 +38,20 @@ router.get('/meals/:id', authHelpers.ensureAuthenticated, async (req, res) => {
 router.post('/meals/:id', authHelpers.ensureAuthenticated, async (req, res) => {
   const { user } = req;
 
+  // check if user is admin
   if (!user.admin) return res.status(401).json({ message: 'Unauthorized' });
 
+  // Obtain id of meal from url params and values to be updated from request body.
   const { id } = req.params;
   const { description, calorieCount, date } = req.body;
 
   try {
+    // Make the update using knex
     await knex('calorie_count')
       .update({ description, calorie_count: calorieCount, date })
       .where({ id });
+
+    // If no errors return success
     return res.status(200).json({ message: 'updated meal' });
   } catch (e) {
     console.log(e);
@@ -50,14 +63,17 @@ router.post('/meals/:id', authHelpers.ensureAuthenticated, async (req, res) => {
 router.get('/meals', authHelpers.ensureAuthenticated, async (req, res) => {
   const { user } = req;
 
+  // check if user is admin
   if (!user.admin) return res.status(401).json({ message: 'Unauthorized' });
 
   try {
+    // Query to obtain all users
     const query = `
       select calorie_count.id, description, username, calories, date from calorie_count
       inner join users on users.id = calorie_count.created_by
       order by calorie_count.created_at
     `;
+    // Obtain meals and send as response
     const { rows: meals } = await knex.raw(query);
 
     return res.status(200).json({ message: meals });
@@ -70,10 +86,14 @@ router.get('/meals', authHelpers.ensureAuthenticated, async (req, res) => {
 // Route to obtain an user to be edited from the id in url params
 router.get('/users/:id', authHelpers.ensureAuthenticated, async (req, res) => {
   const { user } = req;
-  const { id } = req.params;
+
+  // check if user is admin
   if (!user.admin) return res.status(401).json({ message: 'Unauthorized' });
+  // obtain user id from url params
+  const { id } = req.params;
 
   try {
+    // Query to obtain user information and send that as reponse
     const query = 'select username, calorie_per_day from users where id=?';
     const { rows: users } = await knex.raw(query, [id]);
 
@@ -88,11 +108,13 @@ router.get('/users/:id', authHelpers.ensureAuthenticated, async (req, res) => {
 router.post('/users/:id', authHelpers.ensureAuthenticated, async (req, res) => {
   const { user } = req;
 
+  // check if user is admin
   if (!user.admin) return res.status(401).json({ message: 'Unauthorized' });
-
+  // Obtain user id and fields to be updated from request body.
   const { id } = req.params;
   const { username, caloriePerDay } = req.body;
 
+  // Update users and if success then send proper response
   try {
     await knex('users')
       .update({ username, calorie_per_day: caloriePerDay })
@@ -108,9 +130,11 @@ router.post('/users/:id', authHelpers.ensureAuthenticated, async (req, res) => {
 router.get('/users', authHelpers.ensureAuthenticated, async (req, res) => {
   const { user } = req;
 
+  // check if user is admin
   if (!user.admin) return res.status(401).json({ message: 'Unauthorized' });
 
   try {
+    // Query to obtain all users and send as reponse
     const query = 'select id, username, calorie_per_day from users order by created_at';
     const { rows: users } = await knex.raw(query);
 
